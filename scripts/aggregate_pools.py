@@ -402,6 +402,9 @@ def main():
                     "sb": a["sb"],
                     "avg": round(a["h"] / a["ab"], 3),
                     "ops": round(obp + slg, 3),
+                    "opsPlus": max(40, min(250, round(
+                        100 * (obp / lg[decade]["obp"] + slg / lg[decade]["slg"] - 1)
+                    ))),
                     "rating": min(
                         99,
                         bat_rating(
@@ -435,6 +438,9 @@ def main():
                     "ip": round(a["ip3"] / 3),
                     "so": a["so"],
                     "era": round(a["er"] * 27 / a["ip3"], 2) if a["ip3"] else 9.99,
+                    "eraPlus": max(40, min(250, round(
+                        100 * lg[decade]["era"] / max(a["er"] * 27 / a["ip3"], 0.8)
+                    ))) if a["ip3"] else 40,
                     "rating": min(
                         99,
                         pit_rating(decade, a, roles, pit_seasons[key][pid])

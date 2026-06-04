@@ -85,7 +85,7 @@ export default function ResultScreen({ roster, onReset }: Props) {
   const shareText = [
     `【143-0】プロ野球全時代ドラフト`,
     `${result.wins}勝${result.losses}敗 (勝率${pctText}) — ${verdict.title}`,
-    `打線${Math.round(result.offense)} / 先発${Math.round(result.rotation)} / 救援${Math.round(result.bullpen)} / 最長${result.longestWinStreak}連勝`,
+    `打線OPS+${Math.round(result.offense)} / 先発ERA+${Math.round(result.rotation)} / 救援ERA+${Math.round(result.bullpen)} / 最長${result.longestWinStreak}連勝`,
   ].join('\n')
 
   const copyResult = () => {
@@ -196,9 +196,9 @@ export default function ResultScreen({ roster, onReset }: Props) {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[auto_1fr] sm:gap-x-6">
           {(
             [
-              ['打線', result.offense],
-              ['先発', result.rotation],
-              ['救援', result.bullpen],
+              ['打線 OPS+', result.offense],
+              ['先発 ERA+', result.rotation],
+              ['救援 ERA+', result.bullpen],
             ] as const
           ).map(([label, value]) => (
             <div key={label} className="contents">
@@ -208,7 +208,8 @@ export default function ResultScreen({ roster, onReset }: Props) {
                   <div
                     className="animate-grow-x h-full bg-lamp"
                     style={{
-                      transform: `scaleX(${Math.min(100, value) / 100})`,
+                      // OPS+/ERA+ は 100=リーグ平均。70〜190 をバーに割り付け
+                      transform: `scaleX(${Math.max(0.03, Math.min(1, (value - 70) / 120))})`,
                       animationDelay: '0.7s',
                     }}
                   />
@@ -220,14 +221,18 @@ export default function ResultScreen({ roster, onReset }: Props) {
             </div>
           ))}
         </div>
-        <div className="font-dot mt-4 flex items-center justify-center gap-3 border-t border-board-line pt-3 text-sm">
-          <span>チーム</span>
-          <OvrBadge rating={Math.round(result.strength)} size="lg" labeled />
+        <p className="font-dot mt-4 flex items-center justify-center gap-3 border-t border-board-line pt-3 text-sm">
+          <span>
+            期待勝率{' '}
+            <span className="text-xl text-lamp">
+              {result.winProb.toFixed(3).replace(/^0/, '')}
+            </span>
+          </span>
           <span className="mx-3 text-board-text/40">|</span>
           <span>
             最長連勝 <span className="text-xl text-lamp">{result.longestWinStreak}</span>
           </span>
-        </div>
+        </p>
       </div>
 
       {/* 星取表 */}

@@ -56,13 +56,13 @@ def draft(strategy: str, rng: random.Random):
                 continue
             slots = eligible_slots_batter(roster, b)
             if slots:
-                cands.append((b["rating"], b["id"], slots, "bat"))
+                cands.append((b.get("opsPlus", 100), b["id"], slots, "bat"))
         for p in pool["pitchers"]:
             if p["id"] in picked:
                 continue
             slots = eligible_slots_pitcher(roster, p)
             if slots:
-                cands.append((p["rating"], p["id"], slots, "pit"))
+                cands.append((p.get("eraPlus", 100), p["id"], slots, "pit"))
         if not cands:
             continue  # 再抽選
         cands.sort(key=lambda c: c[0])
@@ -78,31 +78,33 @@ def draft(strategy: str, rng: random.Random):
     off = sum(roster[s] for s in BATTER_SLOTS) / 9
     rot = sum(roster[s] for s in SP_SLOTS) / 5
     pen = sum(roster[s] for s in RP_SLOTS) / 3
-    return 0.5 * off + 0.32 * rot + 0.18 * pen
+    return (off, rot, pen)
 
 
-def win_prob(strength, pivot=50.0):
-    k = 26.0 if strength >= pivot else 9.0
-    return 1 / (1 + 10 ** (-(strength - pivot) / k))
+def win_prob(prod, E=2.4):
+    """成績ベース(sim.ts と同一のピタゴラス式)"""
+    ops, sp, rp = prod
+    rs = (max(40, ops) / 100) ** 1.8
+    ra = 0.65 * 100 / max(40, sp) + 0.35 * 100 / max(40, rp)
+    r = (rs / ra) ** E
+    return r / (1 + r)
 
 
 def main():
     rng = random.Random(143)
     for strategy in ("best", "median", "worst"):
-        strengths = [draft(strategy, rng) for _ in range(300)]
-        strengths.sort()
+        strengths = sorted([win_prob(draft(strategy, rng)) for _ in range(300)])
         s_lo, s_md, s_hi = (
             strengths[14],
             strengths[150],
             strengths[284],
         )  # 5/50/95パーセンタイル
-        for label, s in (("p05", s_lo), ("p50", s_md), ("p95", s_hi)):
-            p = win_prob(s)
+        for label, p in (("p05", s_lo), ("p50", s_md), ("p95", s_hi)):
             ew = p * 143
             p143 = p**143
             p0 = (1 - p) ** 143
             print(
-                f"{strategy:6s} {label}: S={s:5.1f} p={p:.4f} 期待勝利={ew:6.1f} "
+                f"{strategy:6s} {label}: p={p:.4f} 期待勝利={ew:6.1f} "
                 f"P(143-0)={p143:.3f} P(0-143)={p0:.3f}"
             )
         print()

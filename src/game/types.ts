@@ -61,6 +61,8 @@ export interface PoolBatter {
   sb: number
   avg: number
   ops: number
+  /** 時代補正済みOPS+(勝敗計算に使用) */
+  opsPlus?: number
   /** 年代間補正済みレーティング 1-99 */
   rating: number
 }
@@ -81,6 +83,8 @@ export interface PoolPitcher {
   ip: number
   so: number
   era: number
+  /** 時代補正済みERA+(勝敗計算に使用) */
+  eraPlus?: number
   rating: number
 }
 

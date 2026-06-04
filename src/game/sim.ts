@@ -1,48 +1,70 @@
-import type { RosterPick, SeasonResult, Slot } from './types'
+import type { PoolBatter, PoolPitcher, RosterPick, SeasonResult, Slot } from './types'
 import { BATTER_SLOTS, RP_SLOTS, SP_SLOTS } from './types'
 
 export const SEASON_GAMES = 143
 
 /**
- * チーム総合力(1-99)→1試合の勝率。実データ分布で較正した非対称ロジスティック:
- * - 全力ドラフト(S≈83) → 約140勝・全勝確率 数%(スピン運+完璧な指名で届く)
- * - 中位ドラフト(S≈50) → 7割前後の勝率帯=並のAクラス争い
- * - わざと弱く(S≈37) → 1桁勝利、0-143も現実圏
+ * 勝敗は OVR ではなく「成績そのもの」から計算する。
+ * - 得点力: 打線9人の平均 OPS+(時代補正済み)→ RS ∝ (OPS+/100)^1.8
+ * - 失点力: 先発 ERA+(イニング65%)と救援 ERA+(35%)→ RA ∝ Σ(100/ERA+)
+ * - 1試合の勝率: ピタゴラス式 p = (RS/RA)^E / (1 + (RS/RA)^E)
+ *   E は「ほぼ完璧なドラフトで全勝が現実圏」になるよう較正したゲーム用指数。
  */
-export function winProbability(strength: number): number {
-  const pivot = 50
-  const k = strength >= pivot ? 26 : 9
-  return 1 / (1 + Math.pow(10, -(strength - pivot) / k))
-}
+const RUNS_EXP = 1.8
+const PYTHAG_E = 2.4
+const SP_INNINGS_SHARE = 0.65
 
 function mean(xs: number[]): number {
   return xs.length === 0 ? 0 : xs.reduce((a, b) => a + b, 0) / xs.length
 }
 
-export function teamStrength(roster: Partial<Record<Slot, RosterPick>>): {
-  offense: number
-  rotation: number
-  bullpen: number
-  strength: number
-} {
-  const ratings = (slots: Slot[]) =>
-    slots
-      .map((s) => roster[s])
-      .filter((p): p is RosterPick => p != null)
-      .map((p) => p.player.rating)
-  const offense = mean(ratings(BATTER_SLOTS))
-  const rotation = mean(ratings(SP_SLOTS))
-  const bullpen = mean(ratings(RP_SLOTS))
-  const strength = 0.5 * offense + 0.32 * rotation + 0.18 * bullpen
-  return { offense, rotation, bullpen, strength }
+function batterOpsPlus(p: RosterPick): number {
+  const b = p.player as PoolBatter
+  return b.opsPlus ?? 100
+}
+
+function pitcherEraPlus(p: RosterPick): number {
+  const x = p.player as PoolPitcher
+  return Math.max(40, x.eraPlus ?? 100)
+}
+
+export interface TeamProduction {
+  /** 打線の平均OPS+ */
+  opsPlus: number
+  /** 先発陣の平均ERA+ */
+  spEraPlus: number
+  /** 救援陣の平均ERA+ */
+  rpEraPlus: number
+}
+
+export function teamProduction(
+  roster: Partial<Record<Slot, RosterPick>>,
+): TeamProduction {
+  const picks = (slots: Slot[]) =>
+    slots.map((s) => roster[s]).filter((p): p is RosterPick => p != null)
+  return {
+    opsPlus: mean(picks(BATTER_SLOTS).map(batterOpsPlus)),
+    spEraPlus: mean(picks(SP_SLOTS).map(pitcherEraPlus)),
+    rpEraPlus: mean(picks(RP_SLOTS).map(pitcherEraPlus)),
+  }
+}
+
+/** 1試合あたりの勝率(成績ベース・ピタゴラス式) */
+export function winProbability(prod: TeamProduction): number {
+  const rs = Math.pow(Math.max(40, prod.opsPlus) / 100, RUNS_EXP)
+  const ra =
+    SP_INNINGS_SHARE * (100 / Math.max(40, prod.spEraPlus)) +
+    (1 - SP_INNINGS_SHARE) * (100 / Math.max(40, prod.rpEraPlus))
+  const ratio = Math.pow(rs / ra, PYTHAG_E)
+  return ratio / (1 + ratio)
 }
 
 export function simulateSeason(
   roster: Partial<Record<Slot, RosterPick>>,
   rng: () => number = Math.random,
 ): SeasonResult {
-  const { offense, rotation, bullpen, strength } = teamStrength(roster)
-  const p = winProbability(strength)
+  const prod = teamProduction(roster)
+  const p = winProbability(prod)
   const games: boolean[] = []
   let wins = 0
   let streak = 0
@@ -62,10 +84,10 @@ export function simulateSeason(
     wins,
     losses: SEASON_GAMES - wins,
     winProb: p,
-    strength,
-    offense,
-    rotation,
-    bullpen,
+    strength: Math.round(p * 100),
+    offense: prod.opsPlus,
+    rotation: prod.spEraPlus,
+    bullpen: prod.rpEraPlus,
     longestWinStreak,
     games,
   }
