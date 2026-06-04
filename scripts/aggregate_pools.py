@@ -130,6 +130,8 @@ def main():
 
     bat = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # key->pid->stat
     pit = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    bat_seasons = defaultdict(lambda: defaultdict(list))  # key->pid->[年度行]
+    pit_seasons = defaultdict(lambda: defaultdict(list))
     bat_years = defaultdict(lambda: defaultdict(set))
     pit_years = defaultdict(lambda: defaultdict(set))
     names = {}
@@ -160,6 +162,7 @@ def main():
                 agg = bat[key][pid]
                 for k in ("g", "pa", "ab", "h", "tb", "hr", "rbi", "sb", "sf", "bb", "hbp", "so"):
                     agg[k] += row[k]
+                bat_seasons[key][pid].append(row)
                 bat_years[key][pid].add(row["year"])
             for row in rec["pitching"]:
                 fid = franchise_of(row["team"], row["year"])
@@ -170,6 +173,7 @@ def main():
                 agg = pit[key][pid]
                 for k in ("g", "w", "l", "sv", "hld", "cg", "ip3", "so", "er"):
                     agg[k] += row[k]
+                pit_seasons[key][pid].append(row)
                 pit_years[key][pid].add(row["year"])
 
     if unmapped:
@@ -288,31 +292,68 @@ def main():
         """在籍量係数: √と線形のブレンド。短期在籍の率スパイクを抑える。"""
         return (math.sqrt(x) + x) / 2
 
-    def bat_rating(decade, a, primary_pos=None):
+    def bat_base(ops_plus):
+        # スター帯を引き伸ばす非線形カーブ(OPS+140超は加重増)
+        return (ops_plus - 100) * 0.55 + max(0.0, ops_plus - 140) * 0.35
+
+    def season_ops_plus(decade, row):
+        ob_den = row["ab"] + row["bb"] + row["hbp"] + row["sf"]
+        if ob_den <= 0 or row["ab"] <= 0:
+            return None
+        obp = (row["h"] + row["bb"] + row["hbp"]) / ob_den
+        slg = row["tb"] / row["ab"]
+        return 100 * (obp / lg[decade]["obp"] + slg / lg[decade]["slg"] - 1)
+
+    def bat_rating(decade, a, primary_pos=None, seasons=()):
         ob_den = a["ab"] + a["bb"] + a["hbp"] + a["sf"]
         obp = (a["h"] + a["bb"] + a["hbp"]) / ob_den
         slg = a["tb"] / a["ab"]
         ops_plus = 100 * (obp / lg[decade]["obp"] + slg / lg[decade]["slg"] - 1)
         w = playing_time_w(min(a["pa"], 2500) / 2500)
-        # スター帯を引き伸ばす非線形カーブ(OPS+140超は加重増)
-        base = (ops_plus - 100) * 0.55 + max(0.0, ops_plus - 140) * 0.35
+        base_agg = bat_base(ops_plus) * w
+        # キャリアハイ: その球団×年代でのベストシーズン(規定相当のみ)
+        min_pa, ref_pa = (120, 150) if decade <= 1940 else (350, 450)
+        peak = 0.0
+        for row in seasons:
+            if row["pa"] < min_pa:
+                continue
+            op = season_ops_plus(decade, row)
+            if op is None:
+                continue
+            peak = max(peak, bat_base(op) * min(1.0, row["pa"] / ref_pa))
+        # キャリアハイボーナス: ベストシーズンが年代通算評価を超える分(上限+12)
+        score = base_agg + min(12.0, 0.35 * max(0.0, peak - base_agg))
         sb_bonus = min(5, a["sb"] / 60)
         pos_adj = POS_ADJ.get(primary_pos, 0) * w
-        return max(1, min(99, round(50 + base * w + sb_bonus + pos_adj)))
+        return max(1, min(99, round(50 + score + sb_bonus + pos_adj)))
 
-    def pit_rating(decade, a, roles):
-        era = a["er"] * 27 / a["ip3"] if a["ip3"] else 9.9
+    def pit_base(era_plus, rp_only):
+        b = (era_plus - 100) * 0.85 + max(0.0, era_plus - 135) * 0.35
+        # リリーフ専業は1イニングの重みを割引(先発の負荷との等価性確保)
+        return b * (0.75 if rp_only else 1.0)
+
+    def pit_rating(decade, a, roles, seasons=()):
+        rp_only = "SP" not in roles
         # リリーフのERAは出場形態の利得を含むため上限を設ける(専業はさらに厳しめ)
-        ep_cap = 185.0 if "SP" not in roles else 200.0
+        ep_cap = 185.0 if rp_only else 200.0
+        era = a["er"] * 27 / a["ip3"] if a["ip3"] else 9.9
         era_plus = min(ep_cap, 100 * lg[decade]["era"] / max(era, 0.8))
         w = playing_time_w(min(a["ip3"], 3600) / 3600)
+        base_agg = pit_base(era_plus, rp_only) * w
+        # キャリアハイ: ベストシーズン(先発80回/救援50回以上、130回でフル評価)
+        min_ip3 = 180 if decade <= 1940 else (150 if rp_only else 240)
+        peak = 0.0
+        for row in seasons:
+            if row["ip3"] < min_ip3:
+                continue
+            era_s = row["er"] * 27 / row["ip3"]
+            ep_s = min(ep_cap, 100 * lg[decade]["era"] / max(era_s, 0.8))
+            peak = max(peak, pit_base(ep_s, rp_only) * min(1.0, row["ip3"] / 390))
+        # キャリアハイボーナス: ベストシーズンが年代通算評価を超える分(上限+12)
+        score = base_agg + min(12.0, 0.35 * max(0.0, peak - base_agg))
         vol = min(8, a["ip3"] / 1200)
         svb = min(6, (a["sv"] + a["hld"] * 0.5) / 35)
-        base = (era_plus - 100) * 0.85 + max(0.0, era_plus - 135) * 0.35
-        # リリーフ専業は1イニングの重みを割引(先発の負荷との等価性確保)
-        if "SP" not in roles:
-            base *= 0.75
-        return max(1, min(99, round(50 + base * w + vol + svb)))
+        return max(1, min(99, round(50 + score + vol + svb)))
 
     def pit_roles(a):
         ip_per_g = a["ip3"] / 3 / a["g"] if a["g"] else 0
@@ -363,7 +404,12 @@ def main():
                     "ops": round(obp + slg, 3),
                     "rating": min(
                         99,
-                        bat_rating(decade, a, pos_list[0] if pos_list else None)
+                        bat_rating(
+                            decade,
+                            a,
+                            pos_list[0] if pos_list else None,
+                            bat_seasons[key][pid],
+                        )
                         + title_bonus(tl),
                     ),
                 }
@@ -389,7 +435,11 @@ def main():
                     "ip": round(a["ip3"] / 3),
                     "so": a["so"],
                     "era": round(a["er"] * 27 / a["ip3"], 2) if a["ip3"] else 9.99,
-                    "rating": min(99, pit_rating(decade, a, roles) + title_bonus(tl)),
+                    "rating": min(
+                        99,
+                        pit_rating(decade, a, roles, pit_seasons[key][pid])
+                        + title_bonus(tl),
+                    ),
                 }
             )
         # 上位に絞る(在籍量ベース)
