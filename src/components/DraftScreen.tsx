@@ -320,7 +320,7 @@ export default function DraftScreen({
         </div>
       )}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* 選手プール */}
         <div className="min-w-0">
           {!pool && !complete && (

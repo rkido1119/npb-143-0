@@ -41,14 +41,17 @@ function SlotRow({
       {pick ? (
         <>
           <span
-            className="h-3 w-1 shrink-0"
+            className="h-7 w-1 shrink-0"
             style={{ background: franchiseColor(pick.franchiseId) }}
             aria-hidden
           />
-          <span className="min-w-0 flex-1 truncate font-medium">{pick.player.name}</span>
-          <span className="shrink-0 text-[10px] text-ink-faint">
-            {FRANCHISES[pick.franchiseId]?.short ?? pick.franchiseId}・
-            {decadeShort(pick.decade)}
+          {/* 名前を1段目に最大幅で、所属は2段目に(見切れ防止) */}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium">{pick.player.name}</span>
+            <span className="block text-[10px] leading-tight text-ink-faint">
+              {FRANCHISES[pick.franchiseId]?.short ?? pick.franchiseId}・
+              {decadeShort(pick.decade)}
+            </span>
           </span>
           {showOvr && (
             <OvrBadge
