@@ -119,9 +119,14 @@ def year_span(years) -> str:
 
 def main():
     positions = {}
+    # 2689web(守備成績ベース)→ Wikipedia の順でマージ(Wikipedia優先)
+    p2689 = os.path.join(ROOT, "data_raw", "positions_2689.json")
+    if os.path.exists(p2689):
+        with open(p2689, encoding="utf-8") as f:
+            positions.update(json.load(f))
     if os.path.exists(POSITIONS):
         with open(POSITIONS, encoding="utf-8") as f:
-            positions = json.load(f)
+            positions.update(json.load(f))
 
     bat = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # key->pid->stat
     pit = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))

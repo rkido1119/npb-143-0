@@ -1,0 +1,63 @@
+<!doctype html>
+<!-- OGP画像生成用 (1200x630)。scripts/make_ogp.md 参照: Playwrightでスクショして public/ogp.png に保存 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { width: 1200px; height: 630px; overflow: hidden; }
+  .paper {
+    width: 100%; height: 100%;
+    background-color: #f4efe3;
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% -10%, rgba(199,62,46,.06), transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    display: flex; align-items: center; padding: 0 70px; gap: 56px;
+    border-top: 14px solid #1a1714; border-bottom: 14px solid #1a1714;
+    position: relative;
+  }
+  .gogai {
+    writing-mode: vertical-rl; font-family: 'Shippori Mincho B1', serif;
+    background: #c73e2e; color: #f4efe3; font-size: 54px; font-weight: 800;
+    padding: 26px 14px; letter-spacing: .35em; flex-shrink: 0;
+  }
+  .main { flex: 1; }
+  .board {
+    background:
+      linear-gradient(rgba(255,255,255,.03), rgba(0,0,0,.25)),
+      repeating-linear-gradient(0deg, #11241b 0 3px, #1f3a2c 3px 3.5px);
+    background-color: #11241b; color: #f3f1e4; border-radius: 10px;
+    display: inline-block; padding: 26px 46px 30px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.6), 0 3px 0 #0b170f;
+  }
+  .board .sub { font-family: 'DotGothic16', monospace; font-size: 19px; letter-spacing: .5em; color: #e8a33d; }
+  .board .num { font-family: 'DotGothic16', monospace; font-size: 130px; line-height: 1.05; }
+  .board .num .dash { color: #e8a33d; }
+  h1 { font-family: 'Shippori Mincho B1', serif; font-size: 56px; font-weight: 800; color: #1a1714; margin-top: 26px; letter-spacing: .02em; }
+  h1 .red { color: #c73e2e; }
+  .lead { font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 27px; color: #4a4337; margin-top: 14px; }
+  .tate {
+    writing-mode: vertical-rl; font-family: 'Shippori Mincho B1', serif;
+    font-size: 30px; font-weight: 700; color: #4a4337; letter-spacing: .22em;
+    height: 480px; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+  <div class="paper">
+    <div class="gogai">号外</div>
+    <div class="main">
+      <div class="board">
+        <div class="sub">NIPPON PROFESSIONAL BASEBALL</div>
+        <div class="num">143<span class="dash">-</span>0</div>
+      </div>
+      <h1>九十年の球史から、<br /><span class="red">最強の十七人</span>を。</h1>
+      <p class="lead">球団×年代の抽選ドラフト — 全勝シーズンを目指せ。消えた球団も、伝説も、全部出る。</p>
+    </div>
+    <div class="tate">プロ野球全時代ドラフト遊戯</div>
+  </div>
+</body>
+</html>

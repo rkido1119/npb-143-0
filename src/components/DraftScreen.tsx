@@ -477,7 +477,7 @@ function BatterRow({
         disabled={disabled}
         aria-expanded={open}
         className={cn(
-          'flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors',
+          'flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-left transition-colors',
           disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-paper-deep',
           open && 'bg-paper-deep',
         )}
@@ -504,7 +504,7 @@ function BatterRow({
           </span>
         </span>
         {!hideStats && (
-          <span className="font-dot shrink-0 border-l border-ink/15 pl-3 text-right text-xs leading-5 text-ink-soft tabular-nums">
+          <span className="font-dot w-full text-right text-xs leading-5 text-ink-soft tabular-nums sm:w-auto sm:shrink-0 sm:border-l sm:border-ink/15 sm:pl-3">
             {/* 1行目: 試合数・安打数 / 2行目: 主要成績(盗塁は最後) */}
             <span className="block">
               <span className={cn(b.h != null && 'mr-3')}>{b.g}試合</span>
@@ -576,7 +576,7 @@ function PitcherRow({
         disabled={disabled}
         aria-expanded={open}
         className={cn(
-          'flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors',
+          'flex w-full cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-left transition-colors',
           disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-paper-deep',
           open && 'bg-paper-deep',
         )}
@@ -598,7 +598,7 @@ function PitcherRow({
           </span>
         </span>
         {!hideStats && (
-          <span className="font-dot shrink-0 border-l border-ink/15 pl-3 text-right text-xs leading-5 text-ink-soft tabular-nums">
+          <span className="font-dot w-full text-right text-xs leading-5 text-ink-soft tabular-nums sm:w-auto sm:shrink-0 sm:border-l sm:border-ink/15 sm:pl-3">
             {/* 並び: 登板数 → 主要成績(回/勝敗/防/奪) → S/H */}
             <span className="block">
               <span className="mr-3">{p.g}登板</span>
