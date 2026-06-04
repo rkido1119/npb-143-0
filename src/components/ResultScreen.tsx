@@ -4,7 +4,7 @@ import { SLOT_LABELS } from '../game/labels'
 import { resultVerdict, SEASON_GAMES, simulateSeason } from '../game/sim'
 import type { RosterPick, SeasonResult, Slot } from '../game/types'
 import { ALL_SLOTS, BATTER_SLOTS } from '../game/types'
-import { franchiseColor, FRANCHISES } from '../data/franchiseMeta'
+import { franchiseColor } from '../data/franchiseMeta'
 import { cn } from '../lib/cn'
 import OvrBadge from './OvrBadge'
 
@@ -292,7 +292,7 @@ export default function ResultScreen({ roster, onReset }: Props) {
                   ) : null
                 })()}
                 <span className="text-[10px] text-ink-faint">
-                  {FRANCHISES[pick.franchiseId]?.short}・{pick.decade}年代
+                  {pick.teamDisplayName}・{pick.decade}年代
                 </span>
                 <OvrBadge
                   rating={pick.player.rating}

@@ -2,7 +2,7 @@ import type { Roster } from '../game/engine'
 import { decadeShort, SLOT_LABELS } from '../game/labels'
 import type { Slot } from '../game/types'
 import { BATTER_SLOTS, RP_SLOTS, SP_SLOTS } from '../game/types'
-import { franchiseColor, FRANCHISES } from '../data/franchiseMeta'
+import { franchiseColor } from '../data/franchiseMeta'
 import OvrBadge from './OvrBadge'
 
 interface Props {
@@ -45,12 +45,11 @@ function SlotRow({
             style={{ background: franchiseColor(pick.franchiseId) }}
             aria-hidden
           />
-          {/* 名前を1段目に最大幅で、所属は2段目に(見切れ防止) */}
+          {/* 名前を1段目に最大幅で、所属は2段目に(見切れ防止)。球団名は当時の名称 */}
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium">{pick.player.name}</span>
-            <span className="block text-[10px] leading-tight text-ink-faint">
-              {FRANCHISES[pick.franchiseId]?.short ?? pick.franchiseId}・
-              {decadeShort(pick.decade)}
+            <span className="block truncate text-[10px] leading-tight text-ink-faint">
+              {pick.teamDisplayName}・{decadeShort(pick.decade)}
             </span>
           </span>
           {showOvr && (
