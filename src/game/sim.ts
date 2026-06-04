@@ -11,7 +11,7 @@ export const SEASON_GAMES = 143
  */
 export function winProbability(strength: number): number {
   const pivot = 50
-  const k = strength >= pivot ? 21 : 9
+  const k = strength >= pivot ? 24 : 9
   return 1 / (1 + Math.pow(10, -(strength - pivot) / k))
 }
 
