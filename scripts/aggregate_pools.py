@@ -284,25 +284,34 @@ def main():
     # 守備負担ポジションの価値補正(主位置、在籍量でスケール)
     POS_ADJ = {"C": 9, "SS": 5, "2B": 4, "CF": 4, "3B": 2}
 
+    def playing_time_w(x):
+        """在籍量係数: √と線形のブレンド。短期在籍の率スパイクを抑える。"""
+        return (math.sqrt(x) + x) / 2
+
     def bat_rating(decade, a, primary_pos=None):
         ob_den = a["ab"] + a["bb"] + a["hbp"] + a["sf"]
         obp = (a["h"] + a["bb"] + a["hbp"]) / ob_den
         slg = a["tb"] / a["ab"]
         ops_plus = 100 * (obp / lg[decade]["obp"] + slg / lg[decade]["slg"] - 1)
-        w = math.sqrt(min(a["pa"], 2500) / 2500)
+        w = playing_time_w(min(a["pa"], 2500) / 2500)
         # スター帯を引き伸ばす非線形カーブ(OPS+140超は加重増)
         base = (ops_plus - 100) * 0.55 + max(0.0, ops_plus - 140) * 0.35
         sb_bonus = min(5, a["sb"] / 60)
         pos_adj = POS_ADJ.get(primary_pos, 0) * w
         return max(1, min(99, round(50 + base * w + sb_bonus + pos_adj)))
 
-    def pit_rating(decade, a):
+    def pit_rating(decade, a, roles):
         era = a["er"] * 27 / a["ip3"] if a["ip3"] else 9.9
-        era_plus = 100 * lg[decade]["era"] / max(era, 0.8)
-        w = math.sqrt(min(a["ip3"], 3600) / 3600)
+        # リリーフのERAは出場形態の利得を含むため上限を設ける(専業はさらに厳しめ)
+        ep_cap = 185.0 if "SP" not in roles else 200.0
+        era_plus = min(ep_cap, 100 * lg[decade]["era"] / max(era, 0.8))
+        w = playing_time_w(min(a["ip3"], 3600) / 3600)
         vol = min(8, a["ip3"] / 1200)
-        svb = min(8, (a["sv"] + a["hld"] * 0.5) / 30)
+        svb = min(6, (a["sv"] + a["hld"] * 0.5) / 35)
         base = (era_plus - 100) * 0.85 + max(0.0, era_plus - 135) * 0.35
+        # リリーフ専業は1イニングの重みを割引(先発の負荷との等価性確保)
+        if "SP" not in roles:
+            base *= 0.75
         return max(1, min(99, round(50 + base * w + vol + svb)))
 
     def pit_roles(a):
@@ -364,11 +373,12 @@ def main():
             if not pit_ok(decade, a):
                 continue
             tl = titles_of(key, pid)
+            roles = pit_roles(a)
             pitchers.append(
                 {
                     "id": pid,
                     "name": names[pid],
-                    "roles": pit_roles(a),
+                    "roles": roles,
                     "titles": tl,
                     "years": year_span(pit_years[key][pid]),
                     "g": a["g"],
@@ -379,7 +389,7 @@ def main():
                     "ip": round(a["ip3"] / 3),
                     "so": a["so"],
                     "era": round(a["er"] * 27 / a["ip3"], 2) if a["ip3"] else 9.99,
-                    "rating": min(99, pit_rating(decade, a) + title_bonus(tl)),
+                    "rating": min(99, pit_rating(decade, a, roles) + title_bonus(tl)),
                 }
             )
         # 上位に絞る(在籍量ベース)

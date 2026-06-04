@@ -82,7 +82,7 @@ def draft(strategy: str, rng: random.Random):
 
 
 def win_prob(strength, pivot=50.0):
-    k = 24.0 if strength >= pivot else 9.0
+    k = 22.0 if strength >= pivot else 9.0
     return 1 / (1 + 10 ** (-(strength - pivot) / k))
 
 
