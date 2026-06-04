@@ -118,10 +118,11 @@ def parse_positions_2689(html_text: str):
     for row in grid[sub + 1 :]:
         if not row:
             continue
-        ym = re.match(r"^(19|20)\d\d$", row[0])
+        # 戦前は「1936春」「1936秋」の分割シーズン表記
+        ym = re.match(r"^((?:19|20)\d\d)(?:春|秋)?$", row[0])
         if not ym:
             continue
-        years.add(int(row[0]))
+        years.add(int(ym.group(1)))
         for name, _ in POS_COLS:
             idx = pos_idx.get(name)
             if idx is None or idx >= len(row):

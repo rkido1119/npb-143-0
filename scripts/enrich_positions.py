@@ -214,7 +214,7 @@ def main():
         (pid, name, birth)
         for pid, name, birth in targets
         if cache.get(pid, {}).get("status")
-        in ("missing", "unresolved", "unresolved3", "disambig", "birth_mismatch")
+        in ("missing", "unresolved", "unresolved3", "disambig", "birth_mismatch", "no_pos")
     ]
     print(f"pass3 search: {len(retry3)}")
     for j, (pid, name, birth) in enumerate(retry3):
