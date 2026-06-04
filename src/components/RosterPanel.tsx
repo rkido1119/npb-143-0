@@ -1,5 +1,5 @@
 import type { Roster } from '../game/engine'
-import { SLOT_LABELS } from '../game/labels'
+import { decadeShort, SLOT_LABELS } from '../game/labels'
 import type { Slot } from '../game/types'
 import { BATTER_SLOTS, RP_SLOTS, SP_SLOTS } from '../game/types'
 import { franchiseColor, FRANCHISES } from '../data/franchiseMeta'
@@ -47,8 +47,8 @@ function SlotRow({
           />
           <span className="min-w-0 flex-1 truncate font-medium">{pick.player.name}</span>
           <span className="shrink-0 text-[10px] text-ink-faint">
-            {FRANCHISES[pick.franchiseId]?.short ?? pick.franchiseId}
-            {String(pick.decade).slice(2)}
+            {FRANCHISES[pick.franchiseId]?.short ?? pick.franchiseId}・
+            {decadeShort(pick.decade)}
           </span>
           {showOvr && (
             <OvrBadge

@@ -34,6 +34,11 @@ export const POSITION_LABELS: Record<string, string> = {
   RP: '救援',
 }
 
+/** 年代の短縮表記 例: 1990 → '90s */
+export function decadeShort(decade: number): string {
+  return `'${String(decade).slice(2)}s`
+}
+
 export function fmtAvg(x: number): string {
   return x.toFixed(3).replace(/^0/, '')
 }
