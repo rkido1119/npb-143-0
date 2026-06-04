@@ -95,6 +95,9 @@ export default function App() {
           へのオマージュ。成績データは npb.jp の公開記録を集計したものです。
           {index?.source === 'sample' && ' (現在は開発用サンプルデータ・成績は近似値)'}
         </p>
+        <p className="mt-1">
+          本サイトは非公式・非営利の個人ファンプロジェクトであり、NPB・各球団・選手とは一切関係ありません。
+        </p>
       </footer>
     </div>
   )
