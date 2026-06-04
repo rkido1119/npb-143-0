@@ -81,6 +81,7 @@ export default function ResultScreen({ roster, onReset }: Props) {
   const pct = result.wins / SEASON_GAMES
   const pctText = pct.toFixed(3).replace(/^0/, '')
 
+  const GAME_URL = 'https://rkido1119.github.io/npb-143-0/'
   const shareText = [
     `【143-0】プロ野球全時代ドラフト`,
     `${result.wins}勝${result.losses}敗 (勝率${pctText}) — ${verdict.title}`,
@@ -88,21 +89,21 @@ export default function ResultScreen({ roster, onReset }: Props) {
   ].join('\n')
 
   const copyResult = () => {
-    navigator.clipboard.writeText(shareText).then(() => {
+    navigator.clipboard.writeText(`${shareText}\n${GAME_URL}`).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1600)
     })
   }
 
   const shareToX = () => {
-    const url = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}`
+    const url = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(GAME_URL)}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   // モバイル等ではネイティブの共有シートも使える
   const canNativeShare = typeof navigator !== 'undefined' && 'share' in navigator
   const nativeShare = () => {
-    navigator.share({ text: shareText }).catch(() => {
+    navigator.share({ text: shareText, url: GAME_URL }).catch(() => {
       /* キャンセルは無視 */
     })
   }
