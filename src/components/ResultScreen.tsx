@@ -81,7 +81,7 @@ export default function ResultScreen({ roster, onReset }: Props) {
   const pct = result.wins / SEASON_GAMES
   const pctText = pct.toFixed(3).replace(/^0/, '')
 
-  const GAME_URL = 'https://rkido1119.github.io/npb-143-0/'
+  const GAME_URL = 'https://143-0.com/'
   const shareText = [
     `【143-0】プロ野球全時代ドラフト`,
     `${result.wins}勝${result.losses}敗 (勝率${pctText}) — ${verdict.title}`,

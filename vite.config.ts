@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => ({
-  // GitHub Pages (https://<user>.github.io/npb-143-0/) 配信用
-  base: mode === 'production' ? '/npb-143-0/' : '/',
+export default defineConfig({
+  // 独自ドメイン https://143-0.com/ でルート配信
+  base: '/',
   plugins: [react(), tailwindcss()],
   server: {
     watch: {
@@ -13,4 +13,4 @@ export default defineConfig(({ mode }) => ({
       ignored: ['**/data_raw/**'],
     },
   },
-}))
+})
