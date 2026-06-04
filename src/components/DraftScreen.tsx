@@ -27,6 +27,20 @@ import LotteryBox from './LotteryBox'
 import OvrBadge from './OvrBadge'
 import RosterPanel from './RosterPanel'
 
+/** 行展開時のスロット選択パネル。リスト末尾でも見えるよう自動スクロール */
+function SlotPicker({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ref.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' })
+  }, [])
+  return (
+    <div ref={ref} className="flex flex-wrap items-center gap-2 bg-paper-deep px-4 pb-3">
+      {children}
+    </div>
+  )
+}
+
 /** タイトル受賞チップ(最大3つ+残り冠数) */
 function TitleChips({ titles }: { titles?: TitleEntry[] | null }) {
   if (!titles || titles.length === 0) return null
@@ -525,7 +539,7 @@ function BatterRow({
         )}
       </button>
       {open && !disabled && (
-        <div className="flex flex-wrap items-center gap-2 bg-paper-deep px-4 pb-3">
+        <SlotPicker>
           <span className="font-mincho text-xs font-bold text-ink-soft">どこに置く?</span>
           {eligible.map((s) => (
             <button
@@ -537,7 +551,7 @@ function BatterRow({
               {SLOT_LABELS[s]}
             </button>
           ))}
-        </div>
+        </SlotPicker>
       )}
     </li>
   )
@@ -619,7 +633,7 @@ function PitcherRow({
         )}
       </button>
       {open && !disabled && (
-        <div className="flex flex-wrap items-center gap-2 bg-paper-deep px-4 pb-3">
+        <SlotPicker>
           <span className="font-mincho text-xs font-bold text-ink-soft">どこに置く?</span>
           {spSlot && (
             <button
@@ -639,7 +653,7 @@ function PitcherRow({
               {SLOT_LABELS[rpSlot]}
             </button>
           )}
-        </div>
+        </SlotPicker>
       )}
     </li>
   )
