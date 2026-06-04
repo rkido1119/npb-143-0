@@ -55,6 +55,11 @@ TITLE_BONUS = {
 }
 TITLE_BONUS_CAP = 8.0
 
+# タイトルの種別(野手エントリには打撃タイトル、投手エントリには投手タイトルのみ付与。
+# MVP・新人王は両方)
+BATTING_AWARDS = {"首位打者", "本塁打王", "打点王", "最多安打", "盗塁王", "最高出塁率"}
+PITCHING_AWARDS = {"最多勝", "最優秀防御率", "最多奪三振", "最多セーブ", "最優秀中継ぎ", "最高勝率"}
+
 # 表示順(重要なタイトルから)
 AWARD_ORDER = [
     "MVP",
@@ -235,12 +240,18 @@ def main():
         if unresolved_titles:
             print("  ex:", unresolved_titles[:5])
 
-    def titles_of(key, pid):
+    def titles_of(key, pid, kind):
         tl = player_titles.get(key, {}).get(pid)
         if not tl:
             return None
+        allowed = BATTING_AWARDS if kind == "bat" else PITCHING_AWARDS
+        items = [
+            (a, n) for a, n in tl.items() if a in allowed or a in ("MVP", "新人王")
+        ]
+        if not items:
+            return None
         order = {a: i for i, a in enumerate(AWARD_ORDER)}
-        return sorted(tl.items(), key=lambda kv: order.get(kv[0], 99))
+        return sorted(items, key=lambda kv: order.get(kv[0], 99))
 
     def title_bonus(tl):
         """タイトル受賞による OVR 加算(上限つき)。"""
@@ -389,7 +400,7 @@ def main():
             ob_den = a["ab"] + a["bb"] + a["hbp"] + a["sf"]
             obp = (a["h"] + a["bb"] + a["hbp"]) / ob_den
             slg = a["tb"] / a["ab"]
-            tl = titles_of(key, pid)
+            tl = titles_of(key, pid, "bat")
             pos_list = positions.get(pid, [])
             batters.append(
                 {
@@ -425,7 +436,7 @@ def main():
         for pid, a in pit[key].items():
             if not pit_ok(decade, a):
                 continue
-            tl = titles_of(key, pid)
+            tl = titles_of(key, pid, "pit")
             roles = pit_roles(a)
             pitchers.append(
                 {
