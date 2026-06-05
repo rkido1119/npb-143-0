@@ -136,6 +136,12 @@ def main():
     if os.path.exists(manual):
         with open(manual, encoding="utf-8") as f:
             positions.update(json.load(f))
+    # 年度別守備試合数(主位置判定用)。外野はOF一括
+    fielding = {}
+    f2689 = os.path.join(ROOT, "data_raw", "fielding_2689.json")
+    if os.path.exists(f2689):
+        with open(f2689, encoding="utf-8") as f:
+            fielding = json.load(f)
 
     bat = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # key->pid->stat
     pit = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
@@ -319,6 +325,27 @@ def main():
         slg = row["tb"] / row["ab"]
         return 100 * (obp / lg[decade]["obp"] + slg / lg[decade]["slg"] - 1)
 
+    def bucket_primary(pid, bucket_years, pos_list):
+        """その球団×年代で最も守った位置を主位置に。守備データが無ければ筆頭。"""
+        fallback = pos_list[0] if pos_list else None
+        fld = fielding.get(pid)
+        if not fld:
+            return fallback
+        games = defaultdict(int)
+        for y in bucket_years:
+            for pos, g in fld.get(str(y), {}).items():
+                games[pos] += g
+        if not games:
+            return fallback
+        top = max(games.items(), key=lambda kv: (kv[1], POS_ADJ.get(kv[0], 0)))[0]
+        if top == "OF":
+            # 外野は左中右の内訳が無いため、リスト中の外野位置(先頭)を採用
+            for pos in pos_list:
+                if pos in ("LF", "CF", "RF"):
+                    return pos
+            return fallback
+        return top
+
     def bat_rating(decade, a, primary_pos=None, seasons=()):
         ob_den = a["ab"] + a["bb"] + a["hbp"] + a["sf"]
         obp = (a["h"] + a["bb"] + a["hbp"]) / ob_den
@@ -425,7 +452,7 @@ def main():
                         bat_rating(
                             decade,
                             a,
-                            pos_list[0] if pos_list else None,
+                            bucket_primary(pid, bat_years[key][pid], pos_list),
                             bat_seasons[key][pid],
                         )
                         + title_bonus(tl),
