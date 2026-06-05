@@ -3,7 +3,7 @@ import type { Roster } from '../game/engine'
 import { SLOT_LABELS } from '../game/labels'
 import { resultVerdict, SEASON_GAMES, simulateSeason } from '../game/sim'
 import type { RosterPick, SeasonResult, Slot } from '../game/types'
-import { ALL_SLOTS, BATTER_SLOTS } from '../game/types'
+import { BATTER_SLOTS, RP_SLOTS, SP_SLOTS } from '../game/types'
 import { franchiseColor } from '../data/franchiseMeta'
 import { cn } from '../lib/cn'
 import OvrBadge from './OvrBadge'
@@ -266,43 +266,51 @@ export default function ResultScreen({ roster, onReset }: Props) {
         <h2 className="font-mincho flex items-baseline justify-between border-b-2 border-ink pb-1 text-lg font-bold">
           出場選手
           <span className="text-[10px] font-normal text-ink-faint">
-            OVR = 時代補正した総合力(1〜99)・球団色の濃淡
+            OVR = 時代補正した総合力(1〜99)
           </span>
         </h2>
-        <ul className="mt-2 columns-1 gap-6 sm:columns-2">
-          {ALL_SLOTS.map((slot) => {
-            const pick = roster[slot]
-            if (!pick) return null
-            return (
-              <li
-                key={slot}
-                className="flex break-inside-avoid items-center gap-2 border-b border-dotted border-ink/30 py-1.5 text-sm"
-              >
-                <span className="font-mincho w-12 shrink-0 text-xs font-bold text-ink-soft">
-                  {SLOT_LABELS[slot]}
-                </span>
-                <span className="flex-1 font-medium">{pick.player.name}</span>
-                {(() => {
-                  const crowns = (pick.player.titles ?? []).reduce(
-                    (sum, [, n]) => sum + n,
-                    0,
-                  )
-                  return crowns > 0 ? (
-                    <span className="text-[10px] font-bold text-[#7a5f33]">{crowns}冠</span>
-                  ) : null
-                })()}
-                <span className="text-[10px] text-ink-faint">
-                  {pick.teamDisplayName}・{pick.decade}年代
-                </span>
-                <OvrBadge
-                  rating={pick.player.rating}
-                  size="sm"
-                  teamColor={franchiseColor(pick.franchiseId)}
-                />
-              </li>
-            )
-          })}
-        </ul>
+        <div className="mt-2 grid gap-x-8 sm:grid-cols-2">
+          {([BATTER_SLOTS, [...SP_SLOTS, ...RP_SLOTS]] as Slot[][]).map((slots, col) => (
+            <ul key={col}>
+              {slots.map((slot) => {
+                const pick = roster[slot]
+                if (!pick) return null
+                const crowns = (pick.player.titles ?? []).reduce(
+                  (sum, [, n]) => sum + n,
+                  0,
+                )
+                return (
+                  <li
+                    key={slot}
+                    className="flex items-center gap-2 border-b border-dotted border-ink/30 py-1.5 text-sm"
+                  >
+                    <span className="font-mincho w-12 shrink-0 text-xs font-bold text-ink-soft">
+                      {SLOT_LABELS[slot]}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">
+                        {pick.player.name}
+                        {crowns > 0 && (
+                          <span className="ml-1.5 text-[10px] font-bold text-[#7a5f33]">
+                            {crowns}冠
+                          </span>
+                        )}
+                      </span>
+                      <span className="block truncate text-[10px] leading-tight text-ink-faint">
+                        {pick.teamDisplayName}・{pick.decade}年代
+                      </span>
+                    </span>
+                    <OvrBadge
+                      rating={pick.player.rating}
+                      size="sm"
+                      teamColor={franchiseColor(pick.franchiseId)}
+                    />
+                  </li>
+                )
+              })}
+            </ul>
+          ))}
+        </div>
       </section>
 
       {/* アクション */}
